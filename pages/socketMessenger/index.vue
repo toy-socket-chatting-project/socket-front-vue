@@ -2,34 +2,71 @@
   <v-form>
     <v-btn depressed color="primary" @click="connect">연결</v-btn>
     <v-btn depressed color="error" @click="disconnect">연결해제</v-btn>
-    <v-btn depressed @click="() => { recvList = []; }">대화내용 삭제</v-btn>
-    <v-switch v-model="isLatestScroll" label="자동스크롤" @change="isLatestScroll"></v-switch>
+    <v-btn
+      depressed
+      @click="
+        () => {
+          recvList = [];
+        }
+      "
+      >대화내용 삭제</v-btn
+    >
+    <v-switch
+      v-model="isLatestScroll"
+      label="자동스크롤"
+      @change="isLatestScroll"
+    ></v-switch>
     <v-container>
       <v-row>
         <v-col cols="12" sm="4">
-          <v-text-field v-model="nickname" label="닉네임" required></v-text-field>
+          <v-text-field
+            v-model="nickname"
+            label="닉네임"
+            required
+          ></v-text-field>
         </v-col>
       </v-row>
       <div ref="divRecvList" class="div-recv-list">
-        <div v-for="(item, idx) in recvList" :key="idx"
-          :style="`display: flex; ${simpSessionId === item.simpSessionId ? 'flex-direction: row-reverse' : ''}`"
+        <div
+          v-for="(item, idx) in recvList"
+          :key="idx"
+          :style="`display: flex; ${
+            simpSessionId === item.simpSessionId
+              ? 'flex-direction: row-reverse'
+              : ''
+          }`"
         >
           <v-card min-width="200px" max-width="600px" outlined>
-            <v-card-title :style="`color: ${item.nicknameColor}; padding: 5px 5px 10px 5px`">{{ item.nickname }}</v-card-title>
-            <v-card-subtitle style="padding: 5px;">{{ item.responseTime }}</v-card-subtitle>
-            <v-card-text style="word-wrap: break-word; white-space: pre-wrap;padding: 0 10px 10px 10px;">{{ item.contents }}
+            <v-card-title
+              :style="`color: ${item.nicknameColor}; padding: 5px 5px 10px 5px`"
+              >{{ item.nickname }}</v-card-title
+            >
+            <v-card-subtitle style="padding: 5px">{{
+              item.responseTime
+            }}</v-card-subtitle>
+            <v-card-text
+              style="
+                word-wrap: break-word;
+                white-space: pre-wrap;
+                padding: 0 10px 10px 10px;
+              "
+              >{{ item.contents }}
             </v-card-text>
           </v-card>
         </div>
       </div>
       <v-row>
         <v-col cols="12" md="4">
-          <v-textarea label="내용 입력" v-model="message" @keyup.enter="shortcutCheck"></v-textarea>
+          <v-textarea
+            label="내용 입력"
+            v-model="message"
+            @keyup.enter="shortcutCheck"
+          ></v-textarea>
         </v-col>
       </v-row>
       <input type="file" id="inputImage" @change="handleFileChange" multiple />
       <div v-for="(item, idx) in sendImgSrcList" :key="idx">
-        <img :src="item" style="max-width: 128px;" />
+        <img :src="item" style="max-width: 128px" />
       </div>
     </v-container>
   </v-form>
@@ -39,13 +76,15 @@
 import SockJS from 'sockjs-client';
 import Stomp from 'webstomp-client';
 
+const BACKEND_DOMAIN = '//backend.socket.com:8080';
+
 export default {
-  name: "socketMessenger",
+  name: 'socketMessenger',
   data() {
     return {
       // 소켓 데이터
       stompClient: null,
-      
+
       // 클라이언트 데이터
       simpSessionId: '',
       nickname: '',
@@ -134,14 +173,16 @@ export default {
       }
     },
     divRecvListAutoScroll() {
-      this.isLatestScroll && (this.$refs.divRecvList.scrollTop = this.$refs.divRecvList.scrollHeight);
+      this.isLatestScroll &&
+        (this.$refs.divRecvList.scrollTop =
+          this.$refs.divRecvList.scrollHeight);
     },
     addRecvToList(res) {
       const recv = JSON.parse(res.body) ?? {};
       const lastRecv = this.recvList[this.recvList.length - 1] ?? {};
       if (
-        lastRecv.contents && 
-        lastRecv.simpSessionId === recv.simpSessionId && 
+        lastRecv.contents &&
+        lastRecv.simpSessionId === recv.simpSessionId &&
         lastRecv.nickname === recv.nickname
       ) {
         this.mergeContents(recv);
@@ -152,7 +193,10 @@ export default {
     mergeContents(recv) {
       const _recv = { ...recv };
       const lastRecv = this.recvList.pop();
-      this.recvList.push({ ...lastRecv, contents: `${lastRecv.contents}\n${_recv.contents}` });
+      this.recvList.push({
+        ...lastRecv,
+        contents: `${lastRecv.contents}\n${_recv.contents}`,
+      });
     },
     pushContents(recv) {
       const _recv = { ...recv };
@@ -164,7 +208,9 @@ export default {
       const recvImgSrcList = _recv?.recvImgSrcList ?? [];
       delete _recv.recvImgSrcList;
       delete _recv.contents;
-      recvImgSrcList.forEach(recvImgSrc => this.recvList.push({ ..._recv, recvImgSrc }));
+      recvImgSrcList.forEach(recvImgSrc =>
+        this.recvList.push({ ..._recv, recvImgSrc }),
+      );
     },
 
     connect() {
@@ -172,18 +218,18 @@ export default {
         alert('이미 소켓이 연결되어있습니다.');
         return;
       }
-      // const DOMAIN = '//192.168.219.130:8080';
-      const DOMAIN = '//192.168.1.15:8080'
-      const serverURL = `${DOMAIN}/socket/messenger`;
-      const socket = new SockJS(serverURL);
+      const socket = new SockJS(`${BACKEND_DOMAIN}/socket/messenger`);
       this.stompClient = Stomp.over(socket);
       this.stompClient.connect(
         {},
         () => {
           alert('소켓에 연결되었습니다.');
-          const paredTransportUrl = this.stompClient.ws._transport.url.split('/');
+          const paredTransportUrl =
+            this.stompClient.ws._transport.url.split('/');
           this.simpSessionId = paredTransportUrl[paredTransportUrl.length - 2];
-          this.stompClient.subscribe(this.toSocketUri('send'), res => this.addRecvToList(res));
+          this.stompClient.subscribe(this.toSocketUri('send'), res =>
+            this.addRecvToList(res),
+          );
         },
         e => this.connectionFailHandler(e),
       );
@@ -191,11 +237,17 @@ export default {
     connectionFailHandler(e = {}) {
       console.log('connectio failed. data: ' + JSON.stringify(e, null, 2));
       if (e.code === 1002) {
-        alert('소켓 연결에 실패했습니다. 백엔드 서버가 구동 중인지 확인하시기 바랍니다.');
+        alert(
+          '소켓 연결에 실패했습니다. 백엔드 서버가 구동 중인지 확인하시기 바랍니다.',
+        );
       } else if (e.code === 1006) {
-        alert('소켓 연결이 종료되었습니다. 백엔드 서버가 구동 중인지 확인하시기 바랍니다.');
+        alert(
+          '소켓 연결이 종료되었습니다. 백엔드 서버가 구동 중인지 확인하시기 바랍니다.',
+        );
       } else {
-        alert('알 수 없는 이유로 소켓 연결에 실패했습니다. 자세한 정보는 콘솔로그를 확인하시기 바랍니다.');
+        alert(
+          '알 수 없는 이유로 소켓 연결에 실패했습니다. 자세한 정보는 콘솔로그를 확인하시기 바랍니다.',
+        );
       }
     },
     send() {
@@ -232,6 +284,7 @@ export default {
       if (this.isBlank(this.nickname)) {
         return;
       }
+      console.log('log!');
       // TODO: debounce
     },
     disconnect() {
