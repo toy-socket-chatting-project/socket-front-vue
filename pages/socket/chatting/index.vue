@@ -1,21 +1,11 @@
 <template>
   <v-form>
-    <v-btn depressed color="primary" @click="connect">연결</v-btn>
-    <v-btn depressed color="error" @click="disconnect">연결해제</v-btn>
-    <v-btn
-      depressed
-      @click="
-        () => {
-          recvList = [];
-        }
-      "
-      >대화내용 삭제</v-btn
-    >
-    <v-switch
-      v-model="isLatestScroll"
-      label="자동스크롤"
-      @change="isLatestScroll"
-    ></v-switch>
+    <control-box
+      :autoScroll="divRecvListAutoScroll"
+      :connect="connect"
+      :disconnect="disconnect"
+      @clearRecvList="clearRecvList"
+    />
     <v-container>
       <v-row>
         <v-col cols="12" sm="4">
@@ -76,10 +66,15 @@
 import SockJS from 'sockjs-client';
 import Stomp from 'webstomp-client';
 
+import ControlBox from '@/components/socket/chatting/ControlBox';
+
 const BACKEND_DOMAIN = '//backend.socket.com:8080';
 
 export default {
-  name: 'socketMessenger',
+  name: 'SocketChatting',
+  components: {
+    ControlBox,
+  },
   data() {
     return {
       // 소켓 데이터
@@ -113,8 +108,7 @@ export default {
   },
   mounted() {
     this.isLatestScroll = true;
-
-    this.connect();
+    // this.connect();
   },
   methods: {
     // 파일 전송
@@ -171,6 +165,9 @@ export default {
       if (!e.shiftKey && e.key === 'Enter') {
         this.send();
       }
+    },
+    clearRecvList() {
+      this.recvList = [];
     },
     divRecvListAutoScroll() {
       this.isLatestScroll &&
