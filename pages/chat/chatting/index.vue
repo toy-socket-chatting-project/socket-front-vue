@@ -1,9 +1,11 @@
 <template>
   <v-form>
-    <control-box
+    <socket-controller
       :autoScroll="divRecvListAutoScroll"
-      :connect="connect"
-      :disconnect="disconnect"
+      @connectSuccessProcessing="connectSuccessProcessing"
+      @connectFailProcessing="connectFailProcessing"
+      @disconnectSuccessProcessing="disconnectFailProcessing"
+      @disconnectFailProcessing="disconnectFailProcessing"
       @clearRecvList="clearRecvList"
     />
     <v-container>
@@ -63,17 +65,12 @@
 </template>
 
 <script>
-import SockJS from 'sockjs-client';
-import Stomp from 'webstomp-client';
-
-import ControlBox from '@/components/socket/chatting/ControlBox';
-
-const BACKEND_DOMAIN = '//backend.socket.com:8080';
+import SocketController from '@/components/chat/chatting/SocketController';
 
 export default {
   name: 'SocketChatting',
   components: {
-    ControlBox,
+    SocketController,
   },
   data() {
     return {
@@ -111,6 +108,55 @@ export default {
     // this.connect();
   },
   methods: {
+    connectSuccessProcessing(result = {}) {
+      this.stompClient = result.stompClient;
+      const paredTransportUrl = this.stompClient.ws._transport.url.split('/');
+      this.simpSessionId = paredTransportUrl[paredTransportUrl.length - 2];
+      this.stompClient.subscribe(this.toSocketUri('send'), res =>
+        this.addRecvToList(res),
+      );
+      if (result.detailMsg) {
+        window.alert(result.detailMsg);
+        return;
+      }
+      window.alert(
+        '알 수 없는 오류가 발생했습니다. \nresult: ' +
+          JSON.stringify(result, null, 2),
+      );
+    },
+    connectFailProcessing(result = {}) {
+      this.stompClient = result.stompClient;
+      if (result.detailMsg) {
+        window.alert(result.detailMsg);
+        return;
+      }
+      window.alert(
+        '알 수 없는 오류가 발생했습니다. \nresult: ' +
+          JSON.stringify(result, null, 2),
+      );
+    },
+    disconnectSuccessProcessing(result = {}) {
+      this.stompClient = result.stompClient;
+      if (result.detailMsg) {
+        window.alert(result.detailMsg);
+        return;
+      }
+      window.alert(
+        '알 수 없는 오류가 발생했습니다. \nresult: ' +
+          JSON.stringify(result, null, 2),
+      );
+    },
+    disconnectFailProcessing(result = {}) {
+      this.stompClient = result.stompClient;
+      if (result.detailMsg) {
+        window.alert(result.detailMsg);
+        return;
+      }
+      window.alert(
+        '알 수 없는 오류가 발생했습니다. \nresult: ' +
+          JSON.stringify(result, null, 2),
+      );
+    },
     // 파일 전송
     submit() {
       const data = new FormData();
@@ -127,7 +173,7 @@ export default {
       const files = [...e.target.files];
       const fileLength = this.sendImgSrcList.length + files.length;
       if (fileLength >= 5) {
-        alert('이미지는 최대 5개까지 첨부 가능합니다.');
+        window.alert('이미지는 최대 5개까지 첨부 가능합니다.');
         return;
       }
       files.forEach(file => this.addFile(file));
@@ -140,7 +186,7 @@ export default {
       const files = [...e.dataTransfer.files];
       const fileLength = this.sendImgSrcList.length + files.length;
       if (fileLength >= 5) {
-        alert('이미지는 최대 5개까지 첨부 가능합니다.');
+        window.alert('이미지는 최대 5개까지 첨부 가능합니다.');
         return;
       }
       files.forEach(file => this.addFile(file));
@@ -210,55 +256,20 @@ export default {
       );
     },
 
-    connect() {
-      if (this.stompClient?.connected) {
-        alert('이미 소켓이 연결되어있습니다.');
-        return;
-      }
-      const socket = new SockJS(`${BACKEND_DOMAIN}/socket/messenger`);
-      this.stompClient = Stomp.over(socket);
-      this.stompClient.connect(
-        {},
-        () => {
-          alert('소켓에 연결되었습니다.');
-          const paredTransportUrl =
-            this.stompClient.ws._transport.url.split('/');
-          this.simpSessionId = paredTransportUrl[paredTransportUrl.length - 2];
-          this.stompClient.subscribe(this.toSocketUri('send'), res =>
-            this.addRecvToList(res),
-          );
-        },
-        e => this.connectionFailHandler(e),
-      );
-    },
-    connectionFailHandler(e = {}) {
-      console.log('connectio failed. data: ' + JSON.stringify(e, null, 2));
-      if (e.code === 1002) {
-        alert(
-          '소켓 연결에 실패했습니다. 백엔드 서버가 구동 중인지 확인하시기 바랍니다.',
-        );
-      } else if (e.code === 1006) {
-        alert(
-          '소켓 연결이 종료되었습니다. 백엔드 서버가 구동 중인지 확인하시기 바랍니다.',
-        );
-      } else {
-        alert(
-          '알 수 없는 이유로 소켓 연결에 실패했습니다. 자세한 정보는 콘솔로그를 확인하시기 바랍니다.',
-        );
-      }
-    },
     send() {
       if (!this.stompClient?.connected) {
-        alert('연결된 소켓이 없습니다. 소켓 연결 후 대화해주시기 바랍니다.');
+        window.alert(
+          '연결된 소켓이 없습니다. 소켓 연결 후 대화해주시기 바랍니다.',
+        );
         return;
       }
       if (this.isBlank(this.nickname)) {
-        alert('닉네임 입력 후 대화해주시기 바랍니다.');
+        window.alert('닉네임 입력 후 대화해주시기 바랍니다.');
         return;
       }
       if (this.isBlank(this.message)) {
         this.message = '';
-        alert('내용 입력 후 대화해주시기 바랍니다.');
+        window.alert('내용 입력 후 대화해주시기 바랍니다.');
         return;
       }
       this.message = this.message.trim();
@@ -283,14 +294,6 @@ export default {
       }
       console.log('log!');
       // TODO: debounce
-    },
-    disconnect() {
-      if (!this.stompClient?.connected) {
-        alert('소켓이 연결되지 않았습니다.');
-        return;
-      }
-      this.stompClient.disconnect();
-      alert('소켓 연결이 종료되었습니다.');
     },
     isBlank(str) {
       return !str || typeof str !== 'string' || str.trim() === '';
