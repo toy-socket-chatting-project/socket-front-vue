@@ -41,7 +41,7 @@ export default {
   },
   data() {
     return {
-      isDisable: this.isBlank(this.backendDomain),
+      isDisable: this.$stringUtils.isBlank(this.backendDomain),
       // 소켓 데이터
       stompClient: null,
       isLatestScroll: false,
@@ -54,7 +54,7 @@ export default {
   },
   methods: {
     clearRecvList() {
-      this.$emit('@clearRecvList');
+      this.$emit('clearRecvList');
     },
     connect() {
       if (this.stompClient?.connected) {
@@ -99,9 +99,6 @@ export default {
       const result = { stompClient: this.stompClient, detailMsg };
       this.stompClient.disconnect();
       this.$emit('disconnectSuccessProcessing', result);
-    },
-    isBlank(str) {
-      return !str || typeof str !== 'string' || str.trim() === '';
     },
   },
 };

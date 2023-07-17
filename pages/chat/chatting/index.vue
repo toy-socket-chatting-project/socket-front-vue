@@ -61,6 +61,14 @@
         <img :src="item" style="max-width: 128px" />
       </div>
     </v-container>
+    <v-snackbar v-model="snackbar" :timeout="1500">
+      {{ snackbarMessage }}
+      <template v-slot:action="{ attrs }">
+        <v-btn color="blue" text v-bind="attrs" @click="snackbar = false">
+          Close
+        </v-btn>
+      </template>
+    </v-snackbar>
   </v-form>
 </template>
 
@@ -90,6 +98,8 @@ export default {
 
       // UX 관련
       isLatestScroll: false,
+      snackbar: false,
+      snackbarMessage: '',
     };
   },
   watch: {
@@ -116,7 +126,8 @@ export default {
         this.addRecvToList(res),
       );
       if (result.detailMsg) {
-        window.alert(result.detailMsg);
+        this.snackbarMessage = result.detailMsg;
+        this.snackbar = true;
         return;
       }
       window.alert(
@@ -127,7 +138,8 @@ export default {
     connectFailProcessing(result = {}) {
       this.stompClient = result.stompClient;
       if (result.detailMsg) {
-        window.alert(result.detailMsg);
+        this.snackbarMessage = result.detailMsg;
+        this.snackbar = true;
         return;
       }
       window.alert(
@@ -138,7 +150,8 @@ export default {
     disconnectSuccessProcessing(result = {}) {
       this.stompClient = result.stompClient;
       if (result.detailMsg) {
-        window.alert(result.detailMsg);
+        this.snackbarMessage = result.detailMsg;
+        this.snackbar = true;
         return;
       }
       window.alert(
@@ -149,7 +162,8 @@ export default {
     disconnectFailProcessing(result = {}) {
       this.stompClient = result.stompClient;
       if (result.detailMsg) {
-        window.alert(result.detailMsg);
+        this.snackbarMessage = result.detailMsg;
+        this.snackbar = true;
         return;
       }
       window.alert(
@@ -258,18 +272,19 @@ export default {
 
     send() {
       if (!this.stompClient?.connected) {
-        window.alert(
-          '연결된 소켓이 없습니다. 소켓 연결 후 대화해주시기 바랍니다.',
-        );
+        this.snackbarMessage =
+          '연결된 소켓이 없습니다. 소켓 연결 후 대화해주시기 바랍니다.';
+        this.snackbar = true;
         return;
       }
-      if (this.isBlank(this.nickname)) {
-        window.alert('닉네임 입력 후 대화해주시기 바랍니다.');
+      if (this.$stringUtils.isBlank(this.nickname)) {
+        this.snackbarMessage = '닉네임 입력 후 대화해주시기 바랍니다.';
+        this.snackbar = true;
         return;
       }
-      if (this.isBlank(this.message)) {
-        this.message = '';
-        window.alert('내용 입력 후 대화해주시기 바랍니다.');
+      if (this.$stringUtils.isBlank(this.message)) {
+        this.snackbarMessage = '내용 입력 후 대화해주시기 바랍니다.';
+        this.snackbar = true;
         return;
       }
       this.message = this.message.trim();
@@ -289,14 +304,11 @@ export default {
       if (!this.stompClient?.connected) {
         return;
       }
-      if (this.isBlank(this.nickname)) {
+      if (this.$stringUtils.isBlank(this.nickname)) {
         return;
       }
       console.log('log!');
       // TODO: debounce
-    },
-    isBlank(str) {
-      return !str || typeof str !== 'string' || str.trim() === '';
     },
   },
 };
