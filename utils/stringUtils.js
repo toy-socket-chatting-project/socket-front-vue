@@ -1,4 +1,4 @@
-const isBlank = value => /^\s*\S+.*/.test(value);
+const isBlank = value => !value || !/^\s*\S+.*/.test(value);
 
 export default {
   isBlank,

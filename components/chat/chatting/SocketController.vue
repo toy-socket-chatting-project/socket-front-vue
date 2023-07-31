@@ -7,16 +7,6 @@
           <v-btn depressed color="error" @click="disconnect">연결해제</v-btn>
         </v-btn-toggle>
       </v-flex>
-      <v-flex style="display: flex; align-items: center">
-        <v-btn style="margin-right: 10px" depressed @click="clearRecvList"
-          >대화내용 삭제</v-btn
-        >
-        <v-switch
-          v-model="isLatestScroll"
-          label="자동스크롤"
-          @change="isLatestScroll"
-        />
-      </v-flex>
     </v-layout>
   </v-container>
 </template>
@@ -28,11 +18,6 @@ import Stomp from 'webstomp-client';
 export default {
   name: 'SocketController',
   props: {
-    autoScroll: {
-      type: Function,
-      required: false,
-      default: () => window.console.log('autoScroll props not defined.'),
-    },
     backendDomain: {
       type: String,
       required: false,
@@ -47,15 +32,7 @@ export default {
       isLatestScroll: false,
     };
   },
-  watch: {
-    isLatestScroll() {
-      this.isLatestScroll && this.autoScroll();
-    },
-  },
   methods: {
-    clearRecvList() {
-      this.$emit('clearRecvList');
-    },
     connect() {
       if (this.stompClient?.connected) {
         this.connectionFailHandler();

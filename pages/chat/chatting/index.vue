@@ -1,12 +1,10 @@
 <template>
   <v-form>
     <socket-controller
-      :autoScroll="divRecvListAutoScroll"
       @connectSuccessProcessing="connectSuccessProcessing"
       @connectFailProcessing="connectFailProcessing"
       @disconnectSuccessProcessing="disconnectFailProcessing"
       @disconnectFailProcessing="disconnectFailProcessing"
-      @clearRecvList="clearRecvList"
     />
     <v-container>
       <v-row>
@@ -18,41 +16,18 @@
           ></v-text-field>
         </v-col>
       </v-row>
-      <div ref="divRecvList" class="div-recv-list">
-        <div
-          v-for="(item, idx) in recvList"
-          :key="idx"
-          :style="`display: flex; ${
-            simpSessionId === item.simpSessionId
-              ? 'flex-direction: row-reverse'
-              : ''
-          }`"
-        >
-          <v-card min-width="200px" max-width="600px" outlined>
-            <v-card-title
-              :style="`color: ${item.nicknameColor}; padding: 5px 5px 10px 5px`"
-              >{{ item.nickname }}</v-card-title
-            >
-            <v-card-subtitle style="padding: 5px">{{
-              item.responseTime
-            }}</v-card-subtitle>
-            <v-card-text
-              style="
-                word-wrap: break-word;
-                white-space: pre-wrap;
-                padding: 0 10px 10px 10px;
-              "
-              >{{ item.contents }}
-            </v-card-text>
-          </v-card>
-        </div>
-      </div>
+      <chat-window
+        :simp-session-id="simpSessionId"
+        :chat-room="selectedRoom"
+        @clearRecvList="clearRecvList"
+      />
       <v-row>
         <v-col cols="12" md="4">
           <v-textarea
             label="내용 입력"
             v-model="message"
             @keyup.enter="shortcutCheck"
+            :disabled="!isConnected"
           ></v-textarea>
         </v-col>
       </v-row>
@@ -65,7 +40,7 @@
       {{ snackbarMessage }}
       <template v-slot:action="{ attrs }">
         <v-btn color="blue" text v-bind="attrs" @click="snackbar = false">
-          Close
+          닫기
         </v-btn>
       </template>
     </v-snackbar>
@@ -74,11 +49,20 @@
 
 <script>
 import SocketController from '@/components/chat/chatting/SocketController';
+import ChatWindow from '~/components/chat/chatting/ChatWindow.vue';
+
+class Room {
+  constructor(roomId = '', recvList = []) {
+    this.roomId = roomId;
+    this.recvList = recvList;
+  }
+}
 
 export default {
   name: 'SocketChatting',
   components: {
     SocketController,
+    ChatWindow,
   },
   data() {
     return {
@@ -93,28 +77,25 @@ export default {
       fileName: '파일을 선택하세요.',
       file: '',
 
-      // 수신 메시지 데이터
-      recvList: [],
+      // 방데이터
+      selectedRoom: new Room(),
 
       // UX 관련
-      isLatestScroll: false,
       snackbar: false,
       snackbarMessage: '',
     };
   },
   watch: {
-    recvList() {
-      this.$nextTick(() => this.divRecvListAutoScroll());
-    },
     message() {
       this.inputContents();
     },
-    isLatestScroll() {
-      this.divRecvListAutoScroll();
+  },
+  computed: {
+    isConnected() {
+      return !!this.stompClient?.connected;
     },
   },
   mounted() {
-    this.isLatestScroll = true;
     // this.connect();
   },
   methods: {
@@ -227,16 +208,12 @@ export default {
       }
     },
     clearRecvList() {
-      this.recvList = [];
-    },
-    divRecvListAutoScroll() {
-      this.isLatestScroll &&
-        (this.$refs.divRecvList.scrollTop =
-          this.$refs.divRecvList.scrollHeight);
+      this.selectedRoom.recvList = [];
     },
     addRecvToList(res) {
       const recv = JSON.parse(res.body) ?? {};
-      const lastRecv = this.recvList[this.recvList.length - 1] ?? {};
+      const lastRecv =
+        this.selectedRoom.recvList[this.selectedRoom.recvList.length - 1] ?? {};
       if (
         lastRecv.contents &&
         lastRecv.simpSessionId === recv.simpSessionId &&
@@ -249,8 +226,8 @@ export default {
     },
     mergeContents(recv) {
       const _recv = { ...recv };
-      const lastRecv = this.recvList.pop();
-      this.recvList.push({
+      const lastRecv = this.selectedRoom.recvList.pop();
+      this.selectedRoom.recvList.push({
         ...lastRecv,
         contents: `${lastRecv.contents}\n${_recv.contents}`,
       });
@@ -258,7 +235,7 @@ export default {
     pushContents(recv) {
       const _recv = { ...recv };
       delete _recv.recvImgSrcList;
-      this.recvList.push({ ..._recv });
+      this.selectedRoom.recvList.push({ ..._recv });
     },
     pushImgSrcList(recv) {
       const _recv = { ...recv };
@@ -266,12 +243,12 @@ export default {
       delete _recv.recvImgSrcList;
       delete _recv.contents;
       recvImgSrcList.forEach(recvImgSrc =>
-        this.recvList.push({ ..._recv, recvImgSrc }),
+        this.selectedRoom.recvList.push({ ..._recv, recvImgSrc }),
       );
     },
 
     send() {
-      if (!this.stompClient?.connected) {
+      if (!this.isConnected) {
         this.snackbarMessage =
           '연결된 소켓이 없습니다. 소켓 연결 후 대화해주시기 바랍니다.';
         this.snackbar = true;
@@ -301,7 +278,7 @@ export default {
       this.sendImgSrcList.length = 0;
     },
     inputContents() {
-      if (!this.stompClient?.connected) {
+      if (!this.isConnected) {
         return;
       }
       if (this.$stringUtils.isBlank(this.nickname)) {
