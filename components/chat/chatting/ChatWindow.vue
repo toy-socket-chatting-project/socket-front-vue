@@ -72,19 +72,13 @@ class Room {
 
 export default {
   name: 'ChatWindow',
-  props: {
-    stompClient: {
-      type: Object,
-      required: false,
-      defulat: null,
-    },
-  },
   computed: {
     isConnected() {
-      return !!this.stompClient?.connected;
+      return !!this.$store.state.chat?.stompClient?.connected;
     },
     simpSessionId() {
-      const paredTransportUrl = this.stompClient?.ws._transport.url.split('/');
+      const paredTransportUrl =
+        this.$store.state.chat?.stompClient?.ws._transport.url.split('/');
       return paredTransportUrl[paredTransportUrl.length - 2];
     },
   },
@@ -129,8 +123,9 @@ export default {
         );
         return;
       }
-      this.stompClient.subscribe(this.toSocketUri('send'), res =>
-        this.addRecvToList(res),
+      this.$store.state.chat?.stompClient.subscribe(
+        this.toSocketUri('send'),
+        res => this.addRecvToList(res),
       );
       this.isJoined = true;
       this.$emit('displaySnackbar', '대화에 참여되었습니다.');
@@ -142,22 +137,22 @@ export default {
     },
     send() {
       if (!this.isConnected) {
-        this.$emit(
-          'displaySnackbar',
+        this.displaySnackbar(
           '연결된 소켓이 없습니다. 소켓 연결 후 대화해주시기 바랍니다.',
         );
         return;
       }
       if (this.$stringUtils.isBlank(this.nickname)) {
-        this.$emit('displaySnackbar', '닉네임 입력 후 대화해주시기 바랍니다.');
+        this.displaySnackbar('닉네임 입력 후 대화해주시기 바랍니다.');
         return;
       }
       if (this.$stringUtils.isBlank(this.message)) {
-        this.$emit('displaySnackbar', '내용 입력 후 대화해주시기 바랍니다.');
+        this.message = ''; // 엔터 포함 공백문자열 초기화
+        this.displaySnackbar('내용 입력 후 대화해주시기 바랍니다.');
         return;
       }
       this.message = this.message.trim();
-      this.stompClient.send(
+      this.$store.state.chat?.stompClient.send(
         this.toSocketUri('receive'),
         JSON.stringify({
           nickname: this.nickname,
@@ -220,6 +215,15 @@ export default {
     },
     toSocketUri(uri) {
       return '/socket/messenger/' + uri;
+    },
+    displaySnackbar(message) {
+      if (this.$stringUtils.isBlank(message)) {
+        window.alert(
+          '[ChatWindow.displaySnackbar]메시지가 설정되지 않았습니다.',
+        );
+        return;
+      }
+      this.$emit('displaySnackbar', message);
     },
 
     /**
