@@ -3,11 +3,14 @@
     <socket-controller
       @connectSuccessProcessing="connectSuccessProcessing"
       @connectFailProcessing="connectFailProcessing"
-      @disconnectSuccessProcessing="disconnectSuccessProcessing"
+      @disconnectSuccessProcessing="disconnectFailProcessing"
       @disconnectFailProcessing="disconnectFailProcessing"
     />
     <v-container>
-      <chat-window @displaySnackbar="displaySnackbar" />
+      <chat-window
+        :stomp-client="stompClient"
+        @displaySnackbar="displaySnackbar"
+      />
     </v-container>
     <v-snackbar v-model="snackbar" :timeout="snackbarTimeout">
       {{ snackbarMessage }}
@@ -32,6 +35,9 @@ export default {
   },
   data() {
     return {
+      // 소켓 데이터
+      stompClient: null,
+
       // UX 관련
       snackbar: false,
       snackbarMessage: '',
@@ -47,30 +53,48 @@ export default {
       this.snackbarTimeout = timeout;
       this.snackbar = true;
     },
-    connectSuccessProcessing() {
-      this.displaySnackbar('소켓에 연결되었습니다.');
-    },
-    connectFailProcessing(e = {}) {
-      if (e.detailMsg) {
-        this.displaySnackbar(e.detailMsg);
+    connectSuccessProcessing(result = {}) {
+      this.stompClient = result.stompClient;
+      if (result.detailMsg) {
+        this.displaySnackbar(result.detailMsg);
         return;
       }
       window.alert(
         '알 수 없는 오류가 발생했습니다. \nresult: ' +
-          JSON.stringify(e, null, 2),
+          JSON.stringify(result, null, 2),
       );
     },
-    disconnectSuccessProcessing() {
-      this.displaySnackbar('소켓연결이 해제되었습니다.');
-    },
-    disconnectFailProcessing(e = {}) {
-      if (e.detailMsg) {
-        this.displaySnackbar(e.detailMsg);
+    connectFailProcessing(result = {}) {
+      this.stompClient = result.stompClient;
+      if (result.detailMsg) {
+        this.displaySnackbar(result.detailMsg);
         return;
       }
       window.alert(
         '알 수 없는 오류가 발생했습니다. \nresult: ' +
-          JSON.stringify(e, null, 2),
+          JSON.stringify(result, null, 2),
+      );
+    },
+    disconnectSuccessProcessing(result = {}) {
+      this.stompClient = result.stompClient;
+      if (result.detailMsg) {
+        this.displaySnackbar(result.detailMsg);
+        return;
+      }
+      window.alert(
+        '알 수 없는 오류가 발생했습니다. \nresult: ' +
+          JSON.stringify(result, null, 2),
+      );
+    },
+    disconnectFailProcessing(result = {}) {
+      this.stompClient = result.stompClient;
+      if (result.detailMsg) {
+        this.displaySnackbar(result.detailMsg);
+        return;
+      }
+      window.alert(
+        '알 수 없는 오류가 발생했습니다. \nresult: ' +
+          JSON.stringify(result, null, 2),
       );
     },
   },
