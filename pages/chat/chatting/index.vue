@@ -3,7 +3,7 @@
     <socket-controller
       @connectSuccessProcessing="connectSuccessProcessing"
       @connectFailProcessing="connectFailProcessing"
-      @disconnectSuccessProcessing="disconnectFailProcessing"
+      @disconnectSuccessProcessing="disconnectSuccessProcessing"
       @disconnectFailProcessing="disconnectFailProcessing"
     />
     <v-container>

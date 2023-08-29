@@ -15,10 +15,8 @@
       <div
         v-for="(item, idx) in selectedRoom.recvList"
         :key="idx"
-        :style="`display: flex; ${
-          simpSessionId === item.simpSessionId
-            ? 'flex-direction: row-reverse'
-            : ''
+        :class="`div-chat-message ${
+          simpSessionId === item.simpSessionId ? 'my-message' : ''
         }`"
       >
         <v-card min-width="200px" max-width="600px" outlined>
@@ -84,8 +82,8 @@ export default {
       return !!this.stompClient?.connected;
     },
     simpSessionId() {
-      const paredTransportUrl = this.stompClient?.ws._transport.url.split('/');
-      return paredTransportUrl[paredTransportUrl.length - 2];
+      const paredTransportUrl = this.stompClient?.ws._transport.url?.split('/');
+      return paredTransportUrl?.[paredTransportUrl.length - 2];
     },
   },
   data() {
@@ -269,6 +267,13 @@ export default {
     scroll-behavior: auto;
     overflow-y: auto;
     background: gray;
+
+    & .div-chat-message {
+      display: flex;
+      &.my-message {
+        flex-direction: row-reverse;
+      }
+    }
   }
 }
 </style>
