@@ -50,7 +50,7 @@ export default {
   ],
   env: {
     // .env 설정 파일에 있는 URL값 가져와서 세팅
-    AXIOS_BASE_URL: process.env.AXIOS_BASE_URL, //backend 도메인 주소
+    AXIOS_BASE_URL: process.env.AXIOS_BASE_URL, //front 도메인 주소
     API_DEV: process.env.API_DEV, // backend 도메인 주소
   },
   axios: {

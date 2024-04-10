@@ -21,7 +21,7 @@ export default {
     backendDomain: {
       type: String,
       required: false,
-      default: '//backend.socket.com:8080',
+      default: process.env.API_DEV,
     },
   },
   data() {
