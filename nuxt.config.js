@@ -58,15 +58,18 @@ export default {
     baseURL: process.env.AXIOS_BASE_URL,
     proxyHeaders: false,
     credentials: false,
+    // init(axios) {
+    //   axios.default.withCredentials = true;
+    // },
   },
   // axios 에는 프론트 도메인 주소 설정
-  proxy: {
-    '/api/': {
-      target: process.env.API_DEV,
-      pathRewrite: { '/api/': '' }, //패스 스위칭
-      changeOrigin: true, // cors
-    },
-  },
+  // proxy: {
+  //   '/ws': {
+  //     target: process.env.API_DEV,
+  //     pathRewrite: { '^/ws/': '' }, //패스 스위칭
+  //     changeOrigin: true, // cors
+  //   },
+  // },
   // proxy 에는 백엔드 도메인 주소 설정
 
   // Vuetify module configuration: https://go.nuxtjs.dev/config-vuetify

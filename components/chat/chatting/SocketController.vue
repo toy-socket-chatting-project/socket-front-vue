@@ -38,10 +38,14 @@ export default {
         this.connectionFailHandler();
         return;
       }
+      const headers = {
+        // withCredentials: true,
+        // 'custom-header': 'aaa',
+      };
       const socket = new SockJS(`${this.backendDomain}/socket/messenger`);
       this.stompClient = Stomp.over(socket);
       this.stompClient.connect(
-        {},
+        headers,
         () => {
           const detailMsg = '소켓에 연결되었습니다.';
           const result = { stompClient: this.stompClient, detailMsg };
